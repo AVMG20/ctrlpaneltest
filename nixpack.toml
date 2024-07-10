@@ -1,3 +1,2 @@
-[pkgs]
-php = { version = "8.1" }
-phpRedis = "php81Packages.redis"
+[phase.name]
+phpRedis = "php81Extensions.redis"
