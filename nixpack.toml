@@ -1,0 +1,3 @@
+[pkgs]
+php = { version = "8.1" }
+phpRedis = "php81Packages.redis"
