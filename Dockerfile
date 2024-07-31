@@ -28,15 +28,13 @@ WORKDIR /var/www/html
 # Copy existing application directory contents
 COPY . /var/www/html
 
+RUN chown -R www-data:www-data /var/www/html
+
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Change current user to laravel
-RUN addgroup --gid 1000 laravel
-RUN adduser --ingroup laravel --shell /bin/sh laravel
-USER laravel
+RUN composer install --no-interaction
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]
-
