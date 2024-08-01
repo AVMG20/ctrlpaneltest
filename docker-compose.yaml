@@ -10,17 +10,17 @@ services:
     networks:
       - laravel
 
-  nginx:
-    image: nginx:latest
-    ports:
-      - "3000:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - .:/var/www/html
-    depends_on:
-      - app
-    networks:
-      - laravel
+#  nginx:
+#    image: nginx:latest
+#    ports:
+#      - "3000:80"
+#    volumes:
+#      - ./nginx:/etc/nginx/conf.d
+#      - .:/var/www/html
+#    depends_on:
+#      - app
+#    networks:
+#      - laravel
 
   mysql:
     image: mysql:8.0
