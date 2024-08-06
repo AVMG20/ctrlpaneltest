@@ -1,3 +1,4 @@
+# Use the official PHP image as the base image
 FROM php:8.2-fpm
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -13,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     libonig-dev \
     libxml2-dev \
-    libzip-dev
+    libzip-dev \
+    nginx
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -31,12 +33,24 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 storage/* bootstrap/cache/
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Switch to the www-data user
+USER www-data
+
+# Install PHP dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader
 
-# Expose port 9000 and start php-fpm server
+# Switch to the root user
+USER root
+
+# Copy the Nginx configuration file
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 8000 and start php-fpm server
 EXPOSE 8000
-CMD php artisan serve --host=0.0.0.0 --port=8000
+
+CMD service nginx start && php-fpm
