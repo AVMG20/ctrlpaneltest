@@ -1,56 +1,31 @@
 # Use the official PHP image as the base image
-FROM php:8.2-fpm
+FROM serversideup/php:8.2-fpm-nginx-bookworm AS base
 
-ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV SSL_MODE="off"
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    nginx
+# Switch to root so we can do root things
+USER root
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN install-php-extensions intl pdo_mysql redis sodium zip opcache pcntl mysqli gd bcmath
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl mysqli
+# Use the build arguments to change the UID
+# and GID of www-data while also changing
+# the file permissions for NGINX
+RUN docker-php-serversideup-set-id www-data 9999:9999 && \
+    \
+    # Update the file permissions for our NGINX service to match the new UID/GID
+    docker-php-serversideup-set-file-permissions --owner 9999:9999 --service nginx
 
-# Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
-
-# Set working directory
 WORKDIR /var/www/html
 
 # Copy existing application directory contents
-COPY . /var/www/html
+COPY --chown=www-data:www-data . /var/www/html
 
-RUN chown -R www-data:www-data /var/www/html
-RUN chmod -R 755 storage/* bootstrap/cache/
-
-# Install composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# copy nginx configuration to nginx
+COPY --chown=www-data:www-data ./nginx/default.conf /etc/nginx/conf.d/custom.conf
 
 # Switch to the www-data user
 USER www-data
 
 # Install PHP dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader
-
-# Switch to the root user
-USER root
-
-# Copy the Nginx configuration file
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 8000 and start php-fpm server
-EXPOSE 8000
-
-CMD service nginx start && php-fpm
