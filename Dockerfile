@@ -1,8 +1,6 @@
 # Use the official PHP image as the base image
 FROM serversideup/php:8.2-fpm-nginx-bookworm AS base
 
-ENV SSL_MODE="off"
-
 # Switch to root so we can do root things
 USER root
 
@@ -20,9 +18,6 @@ WORKDIR /var/www/html
 
 # Copy existing application directory contents
 COPY --chown=www-data:www-data . /var/www/html
-
-# copy nginx configuration to nginx
-COPY --chown=www-data:www-data ./nginx/default.conf /etc/nginx/conf.d/custom.conf
 
 # Switch to the www-data user
 USER www-data
