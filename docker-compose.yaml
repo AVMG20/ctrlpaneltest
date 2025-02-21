@@ -44,8 +44,9 @@ services:
       dockerfile: nginx.Dockerfile
     container_name: nginx
     restart: unless-stopped
-    ports:
-      - "8500:80"
+    expose:
+      - '80'
+      - '443'
     depends_on:
       - app
     networks:
