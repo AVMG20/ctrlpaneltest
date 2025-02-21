@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: 'ctrlpanel'
+      MYSQL_USER: 'ctrlpaneluser'
+      MYSQL_PASSWORD: 'ctrlpanelpassword'
+      MYSQL_ROOT_PASSWORD: 'ctrlpanelpassword'
+    volumes:
+      - db_data:/var/lib/mysql
+    expose:
+      - 3306
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - laravel
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - laravel
+    expose:
+      - '6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "8500:80"
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    container_name: app
+    restart: unless-stopped
+    expose:
+      - '9000'
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
